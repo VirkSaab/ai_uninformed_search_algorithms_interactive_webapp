@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>AI Search Algorithms</title>
+    <meta name="description" content="AI Search">
+    <meta name="author" content="SitePoint">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <style>
+        #graphContainer {
+            max-width: 100%;
+            width: 100%;
+            max-height: max-content;
+            height: 45rem;
+            margin: 0;
+        }
+        
+        body {
+            font-size: 18px;
+        }
+    </style>
+
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/networkgraph.js"></script>
+
+    <!-- my JavaScripts -->
+    <script src="{{ url_for('static', filename='js/network.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/algorithms.js') }}"></script>
+
+
+</head>
+
+<body>
+    <h1 class="text-center">AI Search Algorithms</h1>
+    <hr>
+    <div class="container-fluid mt-3">
+        <!-- Initial state and goal state dropdown lists -->
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label for="Algorithm">Algorithm:</label>
+                    <select class="form-control" id="algoDDList" onChange=algoSelectFunc()>
+                        <!-- using javascript function make_dropdown_list to add list -->
+                    </select>
+                    <div class="form-group mt-4" id="DLSLimitID">
+                        <!-- using javascript function make_dropdown_list to add list -->
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group">
+                    <label for="Initial">Initial State:</label>
+                    <select class="form-control" id="initialStateDDList" onChange=initialStateFunc()>
+                        <!-- using javascript function make_dropdown_list to add list -->
+                    </select>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group">
+                    <label for="Goal">Goal State:</label>
+                    <select class="form-control" id="goalStateDDList" onChange=goalStateFunc()>
+                        <!-- using javascript function make_dropdown_list to add list -->
+                    </select>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group">
+                    <label for="Goal">Animation Delay (sec) (max=2):</label>
+                    <input type="number" id="AnimationSpeedID" value="0.3" min=0 max=2 step="0.05" placeholder="1">
+                    <!-- using javascript function make_dropdown_list to add list -->
+                </div>
+            </div>
+            <div class="col d-flex justify-content-around align-items-center">
+                <button type="button" class="btn btn-warning shadow" onclick=init_graph()>RESET</button>
+                <button type="button" class="btn btn-danger shadow" onclick=stop_exec()>STOP</button>
+                <button type="button" class="btn btn-success shadow" onclick=runButtonFunc() style="padding-left: 1.3rem; padding-right: 1.3rem;">RUN</button>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-md-auto">
+                <div class="col-md-auto mt-5">
+                    <h3>Network Information</h3>
+                    <ul id="networkInfoList"></ul>
+                </div>
+                <div class="w-100"></div>
+                <br>
+                <div class="col-md-auto mt-5">
+                    <h3>Runtime Information</h3>
+                    <ul>
+                        <li id="numFrontierNodesID"><b># nodes in frontier: </b></li>
+                        <li id="numExploredNodesID"><b># explored nodes: </b></li>
+                        <li id="numPathElementsID"><b>Path elements: </b></li>
+                        <li id="totalEnqueueID"><b>Total enqueue: </b></li>
+                        <li id="pathCostID"><b>Path Cost: </b></li>
+                    </ul>
+                </div>
+                <div class="col-md-auto mt-5 d-flex justify-content-around align-items-center" id="goalAlertID">
+                    <!-- javascript placeholder -->
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="container-fluid" id="graphContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Get graph data and create dropdown menus
+        fetch(`${window.origin}/graphdata`, {
+                method: "POST",
+                cache: "no-cache",
+                headers: new Headers({
+                    "content-type": "application/json"
+                })
+            })
+            .then(function(response) {
+                if (response.status !== 200) {
+                    console.log("Response not 200 :(")
+                    return;
+                }
+                response.json().then(function(data) {
+                    idx = Math.floor(Math.random() * (data["initial_states"].length - 1))
+                        // console.log("idx", idx);
+                    document.getElementById("initialStateDDList").innerHTML = make_dropdown_list(data["initial_states"], data["initial_states"][idx]); // [idx]);
+                    document.getElementById("goalStateDDList").innerHTML = make_dropdown_list(data["goal_states"], data["initial_states"][idx + 5]); // [idx + 5]);
+                    document.getElementById("algoDDList").innerHTML = make_dropdown_list(Object.keys(algosList), "Breadth First Search");
+
+                    initialStateID = document.getElementById("initialStateDDList").value
+                    goalStateID = document.getElementById("goalStateDDList").value
+                });
+            });
+        // Make base network graph
+        init_graph();
+        // set Network information
+        document.getElementById("networkInfoList").innerHTML = makeNetworkInfo();
+
+        // EXECUTE
+        // console.log(Object.keys(algosList));
+        function runButtonFunc() { // when RUN button clicked
+            stop_execution_flag = false;
+            goal_test_flag = false; // null => no solution, true => goal reached, false => cutoff occurred
+            let selected_algorithm = document.getElementById("algoDDList").value
+            let selected_initial_state = document.getElementById("initialStateDDList").value
+            let selected_goal_state = document.getElementById("goalStateDDList").value
+            init_graph();
+            if (selected_algorithm === "Depth Limited Search") { // Check for DLS attributes
+                // console.log("DLSValueID: ", document.getElementById("DLSValueID").value);
+                let depth_limit = document.getElementById("DLSValueID").value;
+                if (depth_limit < 0) {
+                    alert("Depth limit should be positive integer.")
+                } else if (depth_limit == 0) {
+                    alert("Cutoff occurred! No solution within the depth limit.")
+                }
+                algosList[selected_algorithm](selected_initial_state, selected_goal_state, depth_limit);
+            } else {
+                algosList[selected_algorithm](selected_initial_state, selected_goal_state);
+            }
+        }
+    </script>
+
+    <footer class="container-fluid text-right mt-3">
+        &copy
+        <a href="https://virksaab.github.io/">Jitender Singh Virk</a>
+    </footer>
+</body>
+
+</html>
