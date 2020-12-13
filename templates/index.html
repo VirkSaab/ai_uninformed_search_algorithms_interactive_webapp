@@ -137,10 +137,13 @@
         init_graph();
         // set Network information
         document.getElementById("networkInfoList").innerHTML = makeNetworkInfo();
-
         // EXECUTE
         // console.log(Object.keys(algosList));
         function runButtonFunc() { // when RUN button clicked
+            if (document.getElementById("AnimationSpeedID").value > 2) {
+                alert("Max value for Animation Delay is 2 seconds.");
+                return null;
+            }
             stop_execution_flag = false;
             goal_test_flag = false; // null => no solution, true => goal reached, false => cutoff occurred
             let selected_algorithm = document.getElementById("algoDDList").value
