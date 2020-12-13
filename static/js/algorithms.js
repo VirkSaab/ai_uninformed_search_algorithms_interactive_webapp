@@ -9,6 +9,7 @@ let algosList = {
     "Breadth First Search": breadth_first_search,
     "Depth First Search": depth_first_search,
     "Depth Limited Search": depth_limited_search,
+    "Iterative Deepening Depth First Search": iterative_deepening_depth_first_search
 };
 
 
@@ -211,7 +212,7 @@ async function depth_first_search(initial_state, goal_state) { // Section 3.4.3
 
 
 // Depth Limited Search (DLS)
-async function depth_limited_search(initial_state, goal_state, limit) { // Section 3.4.4 & Figure 3.17
+async function depth_limited_search(initial_state, goal_state, limit, show_alert = true) { // Section 3.4.4 & Figure 3.17
     // Goal test
     if (initial_state === goal_state) {
         return alert("Both initial and goal states are same!");
@@ -224,13 +225,22 @@ async function depth_limited_search(initial_state, goal_state, limit) { // Secti
     // Add initial node to the frontier
     frontier.enqueue(initial_state);
 
+    // Get the number of neighbors of initial node as a stopping criteria for frontier
+    var possible_paths_from_initial_node = null;
+    for (node of chart.series[0].nodes) { // for each action... loop
+        if (node.id === initial_state) {
+            // console.log("node.linksTo.length", node.linksTo.length);
+            possible_paths_from_initial_node = node.linksTo.length;
+            break;
+        }
+    }
+
     let parents = {}; // {<child>: <parent>} to create paths
     let total_enqueue = 0;
 
-    while (!frontier.isEmpty()) {
-        let current_state = frontier.dequeue();
+    while (!frontier.isEmpty() && possible_paths_from_initial_node > 0) {
+        let current_state = frontier.elements.shift(); // dequeue First rather than Last
         goal_test_flag, limit = await recursive_depth_limited_search(current_state, goal_state, limit, initial_state, frontier, explored, parents, total_enqueue, goal_test_flag);
-        // limit = limit - 1;
 
         if (goal_test_flag === true) { // if goal reached, return solution 
             console.log("Goal reached!")
@@ -239,21 +249,29 @@ async function depth_limited_search(initial_state, goal_state, limit) { // Secti
             // alert("Goal reached!")
             return true;
         }
-        if (limit == 0) {
-            alert(`Cutoff occurred! No solution within the depth limit = ${document.getElementById("DLSValueID").value}`);
-            break;
-        }
-        // explored = new Set(); // reset explored
+        // if (limit == 0) {
+        //     alert(`Cutoff occurred! No solution within the depth limit = ${document.getElementById("DLSValueID").value}`);
+        //     break;
+        // }
+
+        // Decrease the number of possible paths left
+        possible_paths_from_initial_node--;
     }
     if (goal_test_flag === true) {
         return goal_test_flag;
+    } else {
+        if (show_alert) {
+            alert(`Cutoff occurred! No solution within the depth limit = ${document.getElementById("DLSValueID").value}`);
+        }
+        return false;
     }
 }
 
 async function recursive_depth_limited_search(current_state, goal_state, limit, initial_state, frontier, explored, parents, total_enqueue) {
     // console.log("LIMIT: ", limit);
     // console.log("current_state: ", current_state);
-    // console.log("explored: ", explored)
+    // console.log("frontier: ", frontier.elements);
+    // console.log("explored: ", explored);
 
     if (goal_test_flag === true) {
         // console.log("RETURNING FIRST CONDITION...");
@@ -262,8 +280,8 @@ async function recursive_depth_limited_search(current_state, goal_state, limit, 
     if (current_state === goal_state) { // line 1 (do GOAL-TEST)
         return true, limit;
     }
-    if (limit === 0) { // line 2 (check cutoff)
-        // console.log("LIMI zero!");
+    if (limit <= 0) { // line 2 (check cutoff)
+        // console.log("LIMI zero FR!");
         return false, limit; // return cutoff
     } else {
         let cutoff_occurred = false;
@@ -349,4 +367,31 @@ async function recursive_depth_limited_search(current_state, goal_state, limit, 
         }
     }
     return null, limit;
+}
+
+// Iterative Deepening Depth First Search
+async function iterative_deepening_depth_first_search(initial_state, goal_state) { // Section 3.4.5 & Figure 3.18
+    for (let limit = 1; limit <= 100; limit++) {
+        if (stop_execution_flag === true) {
+            return null;
+        }
+        // console.log("IDDFS: ", limit);
+        result = await depth_limited_search(initial_state, goal_state, limit, show_alert = false)
+        if (goal_test_flag === true) {
+            // Modified showGoalAlert function code for iterative deepening algorithm to display the limit as well.
+            document.getElementById("goalAlertID").innerHTML = `
+                <div class="alert alert-success" role="alert" style="max-width: max-content;">
+                    <h4 class="alert-heading">Goal reached with limit = ${limit}!</h4>
+                </div>`;
+            return true;
+        }
+        // Modified showGoalAlert function code for iterative deepening algorithm to display the limit as well.
+        document.getElementById("goalAlertID").innerHTML = `
+        <div class="alert alert-warning" role="alert" style="max-width: max-content;">
+            <h4 class="alert-heading">No solution within limit = ${limit}. retrying with limit = ${limit+1}.</h4>
+        </div>`;
+        await sleep(1000);
+        // chart.redraw();
+        init_graph();
+    }
 }
