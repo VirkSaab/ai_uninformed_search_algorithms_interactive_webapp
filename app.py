@@ -1,5 +1,5 @@
 from flask import Flask, render_template, url_for, request, jsonify, make_response
-import json
+import json, os
 from time import time
 from random import random
 from flask import Flask, render_template, make_response
@@ -40,8 +40,9 @@ app = Flask(__name__)
 # }
 
 # ---------------------------------------------------- ROMAINA
-
-with open("romania_map.json") as f: # Get data
+THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+filepath = os.path.join(THIS_FOLDER, "romania_map.json")
+with open(filepath) as f: # Get data
     graph_data = json.load(f)
 locations = dict(
     Arad=(91, 492), Bucharest=(400, 327), Craiova=(253, 288),
@@ -106,5 +107,5 @@ def network_func():
     res = make_response(jsonify(network), 200)
     return res
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# if __name__ == "__main__":
+#     app.run(debug=True)
