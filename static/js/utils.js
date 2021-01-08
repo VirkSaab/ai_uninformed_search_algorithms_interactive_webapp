@@ -23,10 +23,10 @@ function make_dropdown_list(data, selected) { // Make initial state and goal sta
 function makeNetworkInfo() {
     let size = "; padding-left: 3rem; padding-top: .8rem; border: none;"
     let info = "";
-    info += `<li><b>Initial Node:</b> <button type="button" class="btn btn-danger" style="background-color:${initialNodeStyle.color}${size}"></button></li>`
-    info += `<li><b>Goal Node:</b> <button type="button" class="btn btn-success" style="background-color:${goalNodeStyle.color}${size}"></button></li>`
-    info += `<li><b>Explored Node:</b> <button type="button" class="btn btn-warning" style="background-color:${exploredNodeStyle.color}${size}"></button></li>`
-    info += `<li><b>Current Node:</b> <button type="button" class="btn btn-primary" style="background-color:${currentNodeStyle.color}${size}"></button></li>`
+    info += `<li><b>Initial State:</b> <button type="button" class="btn btn-danger" style="background-color:${initialNodeStyle.color}${size}"></button></li>`
+    info += `<li><b>Goal State:</b> <button type="button" class="btn btn-success" style="background-color:${goalNodeStyle.color}${size}"></button></li>`
+    info += `<li><b>Explored State:</b> <button type="button" class="btn btn-warning" style="background-color:${exploredNodeStyle.color}${size}"></button></li>`
+    info += `<li><b>Current State:</b> <button type="button" class="btn btn-primary" style="background-color:${currentNodeStyle.color}${size}"></button></li>`
     return info;
 }
 

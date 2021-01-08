@@ -14,7 +14,7 @@ app = Flask(__name__)
 #     ("Ambala", "Shahbad"): 27.7,
 #     ("Shahbad", "Kurukshetra"): 24.3,
 #     ("Kurukshetra", "Karnal"): 37.1,
-    
+
 #     ("Chandigarh", "Rajpura"): 41.7,
 #     ("Rajpura", "Patiala"): 28.2,
 #     ("Patiala", "Pehowa"): 50.6,
@@ -107,5 +107,5 @@ def network_func():
     res = make_response(jsonify(network), 200)
     return res
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)

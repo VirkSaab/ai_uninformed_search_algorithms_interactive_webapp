@@ -51,7 +51,7 @@ function build_graph(states_data, coordinates = null) {
             //     load: update_graph
             // }
         },
-        title: { text: 'State Space' },
+        title: { text: 'State Space (Romania map)' },
 
         plotOptions: { networkgraph: { keys: ['from', 'to'] } },
 
